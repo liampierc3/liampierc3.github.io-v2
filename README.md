@@ -1,1 +1,1 @@
-https://www.youtube.com/redirect?event=channel_header&redir_token=QUFFLUhqbGVZVHR0YkllWFdEbHFCcC1EV29UUjBTNFF2UXxBQ3Jtc0tuajBhMUJzYWhldElRazVKUXhlQnU4RUtpc0pKOENXOS1weGdBejZuMkRNVldYX01YWko5NUhtUnZqa1JQSkZySHR5T2pRSW10R2tfVjQzTkJEZFBOXzlRY0FidDN0NHR2ZDNySWp1X2pOdHhPdmYxMA&q=https%3A%2F%2Fv0-website-7hcpcy.vercel.app
+https://v0-website-7hcpcy.vercel.app
