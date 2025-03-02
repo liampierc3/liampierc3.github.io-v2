@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery - Liam Pierce</title>
+  <meta name="description" content="Portfolio gallery of Liam Pierce - Director / Editor / Cinematographer">
+  <link rel="stylesheet" href="styles/globals.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    .work-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    .work-item {
+      position: relative;
+      overflow: hidden;
+      border-radius: 0.5rem;
+      aspect-ratio: 16/9;
+    }
+    .work-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .work-item:hover img {
+      transform: scale(1.05);
+    }
+    .work-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .work-item:hover .work-overlay {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <header class="fixed w-full top-0 z-50 bg-black">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="index.html" class="text-xl font-bold">Liam</a>
+      <nav class="hidden md:flex space-x-6">
+        <a href="index.html#work" class="hover:text-gray-300">Work</a>
+        <a href="index.html#about" class="hover:text-gray-300">About</a>
+        <a href="index.html#contact" class="hover:text-gray-300">Contact</a>
+      </nav>
+      <div class="md:hidden">
+        <button id="mobile-menu-button" class="text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div id="mobile-menu" class="hidden md:hidden bg-black p-4">
+      <div class="flex flex-col space-y-4">
+        <a href="index.html#work" class="hover:text-gray-300">Work</a>
+        <a href="index.html#about" class="hover:text-gray-300">About</a>
+        <a href="index.html#contact" class="hover:text-gray-300">Contact</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="pt-32 pb-24">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl md:text-5xl font-bold mb-12">Gallery</h1>
+        
+        <div class="work-grid">
+          <!-- Work Item 1 -->
+          <a href="https://www.youtube.com/watch?v=C3tVe_XPfo0" target="_blank" class="work-item group">
+            <img src="https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" alt="Handmade mountain bike">
+            <div class="work-overlay">
+              <h3 class="text-lg font-medium">Handmade mountain bike</h3>
+              <p class="text-sm text-gray-300">This handmade mountain bike is a work of art</p>
+            </div>
+          </a>
+          
+          <!-- Work Item 2 -->
+          <a href="https://vimeo.com" target="_blank" class="work-item group">
+            <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" alt="Trail Performance">
+            <div class="work-overlay">
+              <h3 class="text-lg font-medium">Trail Performance</h3>
+              <p class="text-sm text-gray-300">Exploring the Future of Trail Performance</p>
+            </div>
+          </a>
+          
+          <!-- Work Item 3 -->
+          <a href="https://vimeo.com" target="_blank" class="work-item group">
+            <img src="https://images.unsplash.com/photo-1569317002804-ab77bcf1bce4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" alt="Portal axle material science">
+            <div class="work-overlay">
+              <h3 class="text-lg font-medium">Portal axle material science</h3>
+              <p class="text-sm text-gray-300">Innovative materials for next-generation axles</p>
+            </div>
+          </a>
+          
+          <!-- Work Item 4 -->
+          <a href="https://vimeo.com" target="_blank" class="work-item group">
+            <img src="https://images.unsplash.com/photo-1605379399642-870262d3d051?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" alt="Vinco performance">
+            <div class="work-overlay">
+              <h3 class="text-lg font-medium">Vinco performance</h3>
+              <p class="text-sm text-gray-300">Pushing the boundaries of performance</p>
+            </div>
+          </a>
+          
+          <!-- Work Item 5 -->
+          <a href="https://vimeo.com" target="_blank" class="work-item group">
+            <img src="https://images.unsplash.com/photo-1559570278-eb8d71d06403?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" alt="Commercial Project">
+            <div class="work-overlay">
+              <h3 class="text-lg font-medium">Brand Campaign</h3>
+              <p class="text-sm text-gray-300">Innovative marketing for leading brands</p>
+            </div>
+          </a>
+          
+          <!-- Work Item 6 -->
+          <a href="https://vimeo.com" target="_blank" class="work-item group">
+            <img src="https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" alt="Music Video">
+            <div class="work-overlay">
+              <h3 class="text-lg font-medium">Artist Collaboration</h3>
+              <p class="text-sm text-gray-300">Visual storytelling through music</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="py-8 bg-black border-t border-gray-800">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <p class="text-sm text-gray-400">&copy; 2023 Liam Pierce. All rights reserved.</p>
+        <div class="flex space-x-4 mt-4 md:mt-0">
+          <a href="https://vimeo.com" target="_blank" class="text-gray-400 hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 7l-7 5 7 5V7z"></path>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu toggle
+    document.getElementById('mobile-menu-button').addEventListener('click', function() {
+      const mobileMenu = document.getElementById('mobile-menu');
+      if (mobileMenu.classList.contains('hidden')) {
+        mobileMenu.classList.remove('hidden');
+      } else {
+        mobileMenu.classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html> 
