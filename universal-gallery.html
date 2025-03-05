@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liam Pierce - Universal Gallery</title>
+  <meta name="description" content="Interactive Art Gallery - Director / Editor / Cinematographer">
+  <base href="./">
+  <style>
+    /* Base styles */
+    :root {
+      --background: #000000;
+      --foreground: #ffffff;
+      --accent: #3498db;
+      --muted: #888888;
+      --gradient-start: #111111;
+      --gradient-end: #000000;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--foreground);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Loading screen */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--background);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      transition: opacity 0.5s;
+    }
+
+    .loading-logo {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      letter-spacing: 2px;
+    }
+
+    .loading-bar-container {
+      width: 200px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .loading-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.3s;
+    }
+
+    .loading-text {
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav a {
+      color: inherit;
+      text-decoration: none;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      font-weight: 500;
+    }
+
+    .nav a:hover {
+      opacity: 1;
+    }
+
+    /* Main content */
+    .main-content {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Hallway section */
+    .hallway {
+      height: 100vh;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 1000px;
+      background: linear-gradient(to bottom, var(--gradient-start), var(--gradient-end));
+    }
+
+    .hallway-container {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      position: relative;
+    }
+
+    .hallway-floor {
+      position: absolute;
+      width: 100%;
+      height: 100vh;
+      bottom: 0;
+      background: linear-gradient(to bottom, transparent, rgba(52, 152, 219, 0.1));
+      transform: rotateX(80deg);
+      transform-origin: bottom;
+    }
+
+    .hallway-light-strip {
+      position: absolute;
+      width: 2px;
+      height: 100vh;
+      background-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent);
+      opacity: 0.7;
+    }
+
+    .hallway-light-strip.left {
+      left: 25%;
+    }
+
+    .hallway-light-strip.right {
+      right: 25%;
+    }
+
+    .hallway-end {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50%;
+      height: 50%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .hallway-end-text {
+      color: var(--accent);
+      font-size: 1.5rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+
+    .hallway-character {
+      position: absolute;
+      bottom: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .character-head {
+      width: 30px;
+      height: 45px;
+      background-color: #f0f0f0;
+      border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+    }
+
+    .character-eye {
+      position: absolute;
+      width: 8px;
+      height: 12px;
+      background-color: #000;
+      border-radius: 50%;
+      top: 15px;
+    }
+
+    .character-eye.left {
+      left: 8px;
+    }
+
+    .character-eye.right {
+      right: 8px;
+    }
+
+    .character-body {
+      width: 20px;
+      height: 50px;
+      background-color: #111;
+      margin-top: 5px;
+    }
+
+    .character-arm {
+      position: absolute;
+      width: 5px;
+      height: 40px;
+      background-color: #111;
+      top: 55px;
+    }
+
+    .character-arm.left {
+      left: 10px;
+      transform: rotate(15deg);
+    }
+
+    .character-arm.right {
+      right: 10px;
+      transform: rotate(-15deg);
+    }
+
+    .character-leg {
+      position: absolute;
+      width: 6px;
+      height: 30px;
+      background-color: #111;
+      bottom: 0;
+    }
+
+    .character-leg.left {
+      left: 22px;
+    }
+
+    .character-leg.right {
+      right: 22px;
+    }
+
+    /* Gallery section */
+    .gallery {
+      min-height: 100vh;
+      padding: 6rem 2rem;
+      background: linear-gradient(to bottom, var(--gradient-end), var(--gradient-start));
+    }
+
+    .gallery-title {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 4rem;
+      letter-spacing: 3px;
+      color: var(--foreground);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 3rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .gallery-item {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+      aspect-ratio: 16/9;
+    }
+
+    .gallery-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--accent);
+    }
+
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s;
+    }
+
+    .gallery-item:hover img {
+      transform: scale(1.05);
+    }
+
+    .gallery-item-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+      padding: 1.5rem;
+      transform: translateY(100%);
+      transition: transform 0.3s;
+    }
+
+    .gallery-item:hover .gallery-item-overlay {
+      transform: translateY(0);
+    }
+
+    .gallery-item-title {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+      color: var(--foreground);
+    }
+
+    .gallery-item-description {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      position: relative;
+      max-width: 90%;
+      max-height: 90%;
+    }
+
+    .modal-image {
+      max-width: 100%;
+      max-height: 80vh;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-info {
+      position: absolute;
+      bottom: -60px;
+      left: 0;
+      right: 0;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-description {
+      font-size: 1rem;
+      color: var(--muted);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      background: none;
+      border: none;
+      color: var(--foreground);
+      font-size: 2rem;
+      cursor: pointer;
+    }
+
+    .modal-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.5);
+      color: var(--foreground);
+      border: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .modal-nav:hover {
+      background-color: var(--accent);
+    }
+
+    .modal-prev {
+      left: -70px;
+    }
+
+    .modal-next {
+      right: -70px;
+    }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--muted);
+      animation: bounce 2s infinite;
+    }
+
+    .scroll-indicator-text {
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      letter-spacing: 1px;
+    }
+
+    .scroll-indicator-arrow {
+      font-size: 1.5rem;
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0) translateX(-50%);
+      }
+      40% {
+        transform: translateY(-10px) translateX(-50%);
+      }
+      60% {
+        transform: translateY(-5px) translateX(-50%);
+      }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 2rem;
+      }
+
+      .modal-nav {
+        width: 40px;
+        height: 40px;
+      }
+
+      .modal-prev {
+        left: -50px;
+      }
+
+      .modal-next {
+        right: -50px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .gallery-title {
+        font-size: 2rem;
+      }
+
+      .modal-nav {
+        position: fixed;
+        bottom: 20px;
+        top: auto;
+        transform: none;
+      }
+
+      .modal-prev {
+        left: 20px;
+      }
+
+      .modal-next {
+        right: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loading-screen">
+    <div class="loading-logo">LIAM PIERCE</div>
+    <div class="loading-bar-container">
+      <div class="loading-bar" id="loading-bar"></div>
+    </div>
+    <div class="loading-text" id="loading-text">LOADING GALLERY...</div>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">LIAM PIERCE</div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="universal-gallery.html">Universal Gallery</a>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Hallway Section -->
+    <section class="hallway">
+      <div class="hallway-container">
+        <div class="hallway-floor"></div>
+        <div class="hallway-light-strip left"></div>
+        <div class="hallway-light-strip right"></div>
+        <div class="hallway-end">
+          <div class="hallway-end-text">Enter Gallery</div>
+        </div>
+        <div class="hallway-character">
+          <div class="character-head">
+            <div class="character-eye left"></div>
+            <div class="character-eye right"></div>
+          </div>
+          <div class="character-body"></div>
+          <div class="character-arm left"></div>
+          <div class="character-arm right"></div>
+          <div class="character-leg left"></div>
+          <div class="character-leg right"></div>
+        </div>
+      </div>
+      <div class="scroll-indicator">
+        <div class="scroll-indicator-text">SCROLL DOWN</div>
+        <div class="scroll-indicator-arrow">↓</div>
+      </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="gallery" id="gallery">
+      <h1 class="gallery-title">FUTURISTIC GALLERY</h1>
+      <div class="gallery-grid" id="gallery-grid">
+        <!-- Gallery items will be added here by JavaScript -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal for enlarged images -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close">&times;</button>
+      <img class="modal-image" id="modal-image" src="" alt="">
+      <div class="modal-info">
+        <h2 class="modal-title" id="modal-title"></h2>
+        <p class="modal-description" id="modal-description"></p>
+      </div>
+      <button class="modal-nav modal-prev" id="modal-prev">&lt;</button>
+      <button class="modal-nav modal-next" id="modal-next">&gt;</button>
+    </div>
+  </div>
+
+  <script>
+    // Art pieces to display
+    const artworks = [
+      {
+        title: "Handmade mountain bike",
+        image: "https://img.youtube.com/vi/C3tVe_XPfo0/maxresdefault.jpg",
+        description: "A beautifully crafted handmade mountain bike showcasing precision engineering and design."
+      },
+      {
+        title: "Trail Performance",
+        image: "https://img.youtube.com/vi/Kn9jafKQ_PA/maxresdefault.jpg",
+        description: "High-performance trail riding capturing the thrill of mountain biking."
+      },
+      {
+        title: "Portal axle material science",
+        image: "https://img.youtube.com/vi/OUMHMSO6jeU/maxresdefault.jpg",
+        description: "An exploration of material science in portal axle design and engineering."
+      },
+      {
+        title: "Vinco performance",
+        image: "https://img.youtube.com/vi/flmcDnI_fdE/maxresdefault.jpg",
+        description: "Showcasing the exceptional performance capabilities of Vinco engineering."
+      }
+    ];
+
+    // Initialize the gallery
+    document.addEventListener('DOMContentLoaded', function() {
+      // Simulate loading progress
+      simulateLoading();
+
+      // Create gallery items
+      createGallery();
+
+      // Initialize modal functionality
+      initModal();
+
+      // Add hallway interaction
+      initHallway();
+    });
+
+    // Simulate loading progress
+    function simulateLoading() {
+      const loadingBar = document.getElementById('loading-bar');
+      const loadingText = document.getElementById('loading-text');
+      const loadingScreen = document.getElementById('loading-screen');
+      
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+          
+          loadingBar.style.width = '100%';
+          loadingText.textContent = 'GALLERY READY';
+          
+          setTimeout(() => {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+              loadingScreen.style.display = 'none';
+            }, 500);
+          }, 500);
+        } else {
+          loadingBar.style.width = progress + '%';
+        }
+      }, 200);
+    }
+
+    // Create gallery items
+    function createGallery() {
+      const galleryGrid = document.getElementById('gallery-grid');
+      
+      artworks.forEach((artwork, index) => {
+        const galleryItem = document.createElement('div');
+        galleryItem.className = 'gallery-item';
+        galleryItem.dataset.index = index;
+        
+        galleryItem.innerHTML = `
+          <img src="${artwork.image}" alt="${artwork.title}">
+          <div class="gallery-item-overlay">
+            <h3 class="gallery-item-title">${artwork.title}</h3>
+            <p class="gallery-item-description">${artwork.description}</p>
+          </div>
+        `;
+        
+        galleryItem.addEventListener('click', () => {
+          openModal(index);
+        });
+        
+        galleryGrid.appendChild(galleryItem);
+      });
+    }
+
+    // Initialize modal functionality
+    function initModal() {
+      const modal = document.getElementById('modal');
+      const modalClose = document.getElementById('modal-close');
+      const modalImage = document.getElementById('modal-image');
+      const modalTitle = document.getElementById('modal-title');
+      const modalDescription = document.getElementById('modal-description');
+      const modalPrev = document.getElementById('modal-prev');
+      const modalNext = document.getElementById('modal-next');
+      
+      let currentIndex = 0;
+      
+      // Open modal with specific artwork
+      window.openModal = function(index) {
+        currentIndex = index;
+        updateModalContent();
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      };
+      
+      // Update modal content based on current index
+      function updateModalContent() {
+        const artwork = artworks[currentIndex];
+        modalImage.src = artwork.image;
+        modalTitle.textContent = artwork.title;
+        modalDescription.textContent = artwork.description;
+      }
+      
+      // Close modal
+      modalClose.addEventListener('click', () => {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+      });
+      
+      // Navigate to previous artwork
+      modalPrev.addEventListener('click', () => {
+        currentIndex = (currentIndex - 1 + artworks.length) % artworks.length;
+        updateModalContent();
+      });
+      
+      // Navigate to next artwork
+      modalNext.addEventListener('click', () => {
+        currentIndex = (currentIndex + 1) % artworks.length;
+        updateModalContent();
+      });
+      
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (!modal.classList.contains('active')) return;
+        
+        if (e.key === 'Escape') {
+          modal.classList.remove('active');
+          document.body.style.overflow = '';
+        } else if (e.key === 'ArrowLeft') {
+          currentIndex = (currentIndex - 1 + artworks.length) % artworks.length;
+          updateModalContent();
+        } else if (e.key === 'ArrowRight') {
+          currentIndex = (currentIndex + 1) % artworks.length;
+          updateModalContent();
+        }
+      });
+    }
+
+    // Initialize hallway interaction
+    function initHallway() {
+      const hallwayEnd = document.querySelector('.hallway-end');
+      const gallery = document.getElementById('gallery');
+      
+      // Click on hallway end to scroll to gallery
+      hallwayEnd.addEventListener('click', () => {
+        gallery.scrollIntoView({ behavior: 'smooth' });
+      });
+      
+      // Animate character on scroll
+      window.addEventListener('scroll', () => {
+        const scrollY = window.scrollY;
+        const hallwayHeight = document.querySelector('.hallway').offsetHeight;
+        const character = document.querySelector('.hallway-character');
+        
+        // Move character based on scroll position
+        if (scrollY <= hallwayHeight) {
+          const progress = Math.min(scrollY / hallwayHeight, 1);
+          character.style.transform = `translateX(-50%) translateY(${progress * 30}%)`;
+          character.style.opacity = 1 - progress;
+        }
+      });
+    }
+  </script>
+</body>
+</html> 

@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liam Pierce - Oncyber Style 3D Gallery</title>
+  <meta name="description" content="Interactive 3D Art Gallery - Director / Editor / Cinematographer">
+  <base href="./">
+  <style>
+    /* Base styles */
+    :root {
+      --background: #000000;
+      --foreground: #ffffff;
+      --accent: #3498db;
+      --muted: #888888;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--foreground);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* UI Elements */
+    .ui-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .ui-element {
+      pointer-events: auto;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav a {
+      color: inherit;
+      text-decoration: none;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      font-weight: 500;
+    }
+
+    .nav a:hover {
+      opacity: 1;
+    }
+
+    /* Controls */
+    .controls {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      padding: 0.75rem 1.5rem;
+      border-radius: 2rem;
+      font-size: 0.875rem;
+      color: var(--muted);
+      z-index: 10;
+    }
+
+    /* Loading screen */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--background);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      transition: opacity 0.5s;
+    }
+
+    .loading-logo {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      letter-spacing: 2px;
+    }
+
+    .loading-bar-container {
+      width: 200px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .loading-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.3s;
+    }
+
+    .loading-text {
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* Artwork info panel */
+    .artwork-info {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 300px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      transform: translateY(calc(100% + 2rem));
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 10;
+    }
+
+    .artwork-info.visible {
+      transform: translateY(0);
+    }
+
+    .artwork-title {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .artwork-description {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .artwork-button {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* Fallback message */
+    #fallback-message {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--background);
+      z-index: 1000;
+      padding: 2rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .fallback-title {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .fallback-description {
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      color: var(--muted);
+    }
+
+    .fallback-button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.25rem;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loading-screen">
+    <div class="loading-logo">LIAM PIERCE</div>
+    <div class="loading-bar-container">
+      <div class="loading-bar" id="loading-bar"></div>
+    </div>
+    <div class="loading-text" id="loading-text">LOADING GALLERY...</div>
+  </div>
+
+  <!-- UI Container -->
+  <div class="ui-container">
+    <!-- Header -->
+    <header class="header ui-element">
+      <div class="logo">LIAM PIERCE</div>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="3d-gallery.html">3D Gallery</a>
+      </nav>
+    </header>
+
+    <!-- Controls Instructions -->
+    <div class="controls ui-element">
+      <p>Arrow keys to move | Mouse to look | Click on artwork to view details</p>
+    </div>
+
+    <!-- Artwork Info Panel -->
+    <div class="artwork-info ui-element" id="artwork-info">
+      <h3 class="artwork-title" id="artwork-title">Artwork Title</h3>
+      <p class="artwork-description" id="artwork-description">Artwork description goes here.</p>
+      <a href="#" class="artwork-button">View Details</a>
+    </div>
+  </div>
+
+  <!-- Main container for Three.js -->
+  <div id="canvas-container"></div>
+
+  <!-- Fallback message if 3D doesn't load -->
+  <div id="fallback-message">
+    <h2 class="fallback-title">3D Gallery Experience</h2>
+    <p class="fallback-description">
+      We've created an immersive 3D gallery experience, but it looks like your browser doesn't support WebGL or 3D rendering.
+      Please try using a modern browser like Chrome, Firefox, or Edge.
+    </p>
+    <a href="gallery.html" class="fallback-button">View Standard Gallery</a>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/three/three.min.js"></script>
+  <script src="js/three/examples/js/controls/FirstPersonControls.js"></script>
+  <script src="js/three/examples/js/loaders/GLTFLoader.js"></script>
+
+  <script>
+    // Art pieces to display
+    const artworks = [
+      {
+        title: "Handmade mountain bike",
+        image: "https://img.youtube.com/vi/C3tVe_XPfo0/maxresdefault.jpg",
+        description: "A beautifully crafted handmade mountain bike showcasing precision engineering and design."
+      },
+      {
+        title: "Trail Performance",
+        image: "https://img.youtube.com/vi/Kn9jafKQ_PA/maxresdefault.jpg",
+        description: "High-performance trail riding capturing the thrill of mountain biking."
+      },
+      {
+        title: "Portal axle material science",
+        image: "https://img.youtube.com/vi/OUMHMSO6jeU/maxresdefault.jpg",
+        description: "An exploration of material science in portal axle design and engineering."
+      },
+      {
+        title: "Vinco performance",
+        image: "https://img.youtube.com/vi/flmcDnI_fdE/maxresdefault.jpg",
+        description: "Showcasing the exceptional performance capabilities of Vinco engineering."
+      }
+    ];
+
+    // Initialize the 3D gallery
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if WebGL is available
+      if (!isWebGLAvailable()) {
+        showFallbackMessage();
+        return;
+      }
+
+      // Simulate loading progress
+      simulateLoading();
+
+      // Initialize the 3D scene
+      initGallery();
+    });
+
+    // Check if WebGL is available
+    function isWebGLAvailable() {
+      try {
+        const canvas = document.createElement('canvas');
+        return !!(window.WebGLRenderingContext && 
+          (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // Show fallback message
+    function showFallbackMessage() {
+      document.getElementById('loading-screen').style.display = 'none';
+      document.getElementById('fallback-message').style.display = 'flex';
+    }
+
+    // Simulate loading progress
+    function simulateLoading() {
+      const loadingBar = document.getElementById('loading-bar');
+      const loadingText = document.getElementById('loading-text');
+      const loadingScreen = document.getElementById('loading-screen');
+      
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+          
+          loadingBar.style.width = '100%';
+          loadingText.textContent = 'GALLERY READY';
+          
+          setTimeout(() => {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+              loadingScreen.style.display = 'none';
+            }, 500);
+          }, 500);
+        } else {
+          loadingBar.style.width = progress + '%';
+        }
+      }, 200);
+    }
+
+    // Initialize the 3D gallery
+    function initGallery() {
+      // Three.js variables
+      let scene, camera, renderer, controls;
+      let clock = new THREE.Clock();
+      
+      // Raycaster for interaction
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+      
+      // Array to store artwork objects for raycasting
+      let artworkObjects = [];
+      
+      // Player character
+      let playerCharacter = null;
+      
+      // Initialize the scene
+      function init() {
+        // Create scene
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = new THREE.FogExp2(0x000000, 0.01);
+        
+        // Create camera
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 1.7, 25); // Start at the beginning of the hallway
+        
+        // Create renderer
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+        
+        // Create controls - modified to use arrow keys
+        controls = new THREE.FirstPersonControls(camera, renderer.domElement);
+        controls.movementSpeed = 5;
+        controls.lookSpeed = 0.1;
+        controls.lookVertical = true;
+        controls.constrainVertical = true;
+        controls.verticalMin = Math.PI / 4;
+        controls.verticalMax = Math.PI / 2.1;
+        
+        // Override default WASD keys with arrow keys
+        controls.keys = {
+          LEFT: 37,    // Left arrow
+          UP: 38,      // Up arrow
+          RIGHT: 39,   // Right arrow
+          DOWN: 40,    // Down arrow
+          FORWARD: 38, // Up arrow
+          BACKWARD: 40 // Down arrow
+        };
+        
+        // Create environment
+        createEnvironment();
+        
+        // Create player character
+        createPlayerCharacter();
+        
+        // Add event listeners
+        window.addEventListener('resize', onWindowResize, false);
+        window.addEventListener('click', onMouseClick, false);
+        window.addEventListener('mousemove', onMouseMove, false);
+        
+        // Start animation loop
+        animate();
+      }
+      
+      // Create player character (alien figure)
+      function createPlayerCharacter() {
+        // Create a simple alien character model
+        const alienGroup = new THREE.Group();
+        
+        // Head - elongated oval shape
+        const headGeometry = new THREE.SphereGeometry(0.25, 32, 32);
+        headGeometry.scale(1, 1.5, 0.8);
+        const headMaterial = new THREE.MeshStandardMaterial({
+          color: 0xf0f0f0,
+          roughness: 0.3,
+          metalness: 0.2
+        });
+        const head = new THREE.Mesh(headGeometry, headMaterial);
+        head.position.y = 0.5;
+        alienGroup.add(head);
+        
+        // Eyes - black oval eyes
+        const eyeGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+        eyeGeometry.scale(1, 1.5, 0.5);
+        const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        
+        const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+        leftEye.position.set(-0.08, 0.55, 0.18);
+        leftEye.rotation.y = Math.PI / 12;
+        alienGroup.add(leftEye);
+        
+        const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+        rightEye.position.set(0.08, 0.55, 0.18);
+        rightEye.rotation.y = -Math.PI / 12;
+        alienGroup.add(rightEye);
+        
+        // Body - thin, dark figure
+        const bodyGeometry = new THREE.CylinderGeometry(0.15, 0.1, 0.7, 16);
+        const bodyMaterial = new THREE.MeshStandardMaterial({
+          color: 0x111111,
+          roughness: 0.5,
+          metalness: 0.3
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.y = -0.1;
+        alienGroup.add(body);
+        
+        // Arms
+        const armGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.5, 8);
+        
+        const leftArm = new THREE.Mesh(armGeometry, bodyMaterial);
+        leftArm.position.set(-0.2, 0, 0);
+        leftArm.rotation.z = Math.PI / 6;
+        alienGroup.add(leftArm);
+        
+        const rightArm = new THREE.Mesh(armGeometry, bodyMaterial);
+        rightArm.position.set(0.2, 0, 0);
+        rightArm.rotation.z = -Math.PI / 6;
+        alienGroup.add(rightArm);
+        
+        // Legs
+        const legGeometry = new THREE.CylinderGeometry(0.05, 0.03, 0.5, 8);
+        
+        const leftLeg = new THREE.Mesh(legGeometry, bodyMaterial);
+        leftLeg.position.set(-0.1, -0.5, 0);
+        alienGroup.add(leftLeg);
+        
+        const rightLeg = new THREE.Mesh(legGeometry, bodyMaterial);
+        rightLeg.position.set(0.1, -0.5, 0);
+        alienGroup.add(rightLeg);
+        
+        // Scale and position the alien
+        alienGroup.scale.set(0.7, 0.7, 0.7);
+        alienGroup.position.set(0, 0.5, 0);
+        
+        // Add to scene
+        playerCharacter = alienGroup;
+        scene.add(playerCharacter);
+      }
+      
+      // Create the gallery environment
+      function createEnvironment() {
+        // Create floor
+        const floorGeometry = new THREE.PlaneGeometry(100, 100);
+        const floorMaterial = new THREE.MeshStandardMaterial({ 
+          color: 0x111111,
+          roughness: 0.8,
+          metalness: 0.2
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+        
+        // Create ceiling
+        const ceilingGeometry = new THREE.PlaneGeometry(100, 100);
+        const ceilingMaterial = new THREE.MeshStandardMaterial({ 
+          color: 0x111111,
+          roughness: 0.9,
+          metalness: 0.1
+        });
+        const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+        ceiling.rotation.x = Math.PI / 2;
+        ceiling.position.y = 5;
+        ceiling.receiveShadow = true;
+        scene.add(ceiling);
+        
+        // Create hallway and main gallery room
+        createHallwayAndRoom();
+        
+        // Add artwork displays
+        createArtworkDisplays();
+        
+        // Add lighting
+        createLighting();
+      }
+      
+      // Create hallway and main gallery room
+      function createHallwayAndRoom() {
+        // Hallway dimensions
+        const hallwayLength = 30;
+        const hallwayWidth = 4;
+        const hallwayHeight = 5;
+        
+        // Create hallway walls
+        const hallwayWallMaterial = new THREE.MeshStandardMaterial({
+          color: 0x0a0a0a,
+          roughness: 0.5,
+          metalness: 0.8
+        });
+        
+        // Left wall
+        const leftWallGeometry = new THREE.BoxGeometry(0.2, hallwayHeight, hallwayLength);
+        const leftWall = new THREE.Mesh(leftWallGeometry, hallwayWallMaterial);
+        leftWall.position.set(-hallwayWidth/2, hallwayHeight/2, hallwayLength/2);
+        leftWall.receiveShadow = true;
+        leftWall.castShadow = true;
+        scene.add(leftWall);
+        
+        // Right wall
+        const rightWallGeometry = new THREE.BoxGeometry(0.2, hallwayHeight, hallwayLength);
+        const rightWall = new THREE.Mesh(rightWallGeometry, hallwayWallMaterial);
+        rightWall.position.set(hallwayWidth/2, hallwayHeight/2, hallwayLength/2);
+        rightWall.receiveShadow = true;
+        rightWall.castShadow = true;
+        scene.add(rightWall);
+        
+        // Add futuristic details to hallway
+        addHallwayDetails(hallwayLength, hallwayWidth, hallwayHeight);
+        
+        // Create main gallery room - circular design
+        createMainRoom();
+      }
+      
+      // Add futuristic details to hallway
+      function addHallwayDetails(hallwayLength, hallwayWidth, hallwayHeight) {
+        // Add light strips on the floor
+        const stripGeometry = new THREE.PlaneGeometry(0.1, hallwayLength);
+        const stripMaterial = new THREE.MeshBasicMaterial({
+          color: 0x3498db,
+          side: THREE.DoubleSide,
+          emissive: 0x3498db,
+          emissiveIntensity: 1
+        });
+        
+        // Left strip
+        const leftStrip = new THREE.Mesh(stripGeometry, stripMaterial);
+        leftStrip.rotation.x = -Math.PI / 2;
+        leftStrip.position.set(-hallwayWidth/2 + 0.5, 0.01, hallwayLength/2);
+        scene.add(leftStrip);
+        
+        // Right strip
+        const rightStrip = new THREE.Mesh(stripGeometry, stripMaterial);
+        rightStrip.rotation.x = -Math.PI / 2;
+        rightStrip.position.set(hallwayWidth/2 - 0.5, 0.01, hallwayLength/2);
+        scene.add(rightStrip);
+        
+        // Add floating holographic panels along the hallway
+        for (let i = 0; i < 5; i++) {
+          const panelGeometry = new THREE.PlaneGeometry(1.5, 0.8);
+          const panelMaterial = new THREE.MeshBasicMaterial({
+            color: 0x3498db,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide
+          });
+          
+          // Left panel
+          const leftPanel = new THREE.Mesh(panelGeometry, panelMaterial);
+          leftPanel.position.set(-hallwayWidth/2 + 0.2, 1.5, hallwayLength - 5 - i * 5);
+          leftPanel.rotation.y = Math.PI / 2;
+          scene.add(leftPanel);
+          
+          // Right panel
+          const rightPanel = new THREE.Mesh(panelGeometry, panelMaterial);
+          rightPanel.position.set(hallwayWidth/2 - 0.2, 1.5, hallwayLength - 5 - i * 5);
+          rightPanel.rotation.y = -Math.PI / 2;
+          scene.add(rightPanel);
+          
+          // Add animation data
+          leftPanel.userData.floatSpeed = 0.001;
+          leftPanel.userData.rotateSpeed = 0.001;
+          leftPanel.userData.floatHeight = leftPanel.position.y;
+          leftPanel.userData.floatOffset = i * Math.PI / 3;
+          
+          rightPanel.userData.floatSpeed = 0.001;
+          rightPanel.userData.rotateSpeed = 0.001;
+          rightPanel.userData.floatHeight = rightPanel.position.y;
+          rightPanel.userData.floatOffset = i * Math.PI / 3 + Math.PI;
+        }
+      }
+      
+      // Create main gallery room
+      function createMainRoom() {
+        // Main room is a large circular space
+        const roomRadius = 20;
+        const roomHeight = 8;
+        
+        // Create a circular wall
+        const wallSegments = 24;
+        const wallMaterial = new THREE.MeshStandardMaterial({
+          color: 0x0a0a0a,
+          roughness: 0.5,
+          metalness: 0.8
+        });
+        
+        for (let i = 0; i < wallSegments; i++) {
+          // Skip segments where the hallway connects
+          if (i > 5 && i < 19) {
+            const angle = (i / wallSegments) * Math.PI * 2;
+            const nextAngle = ((i + 1) / wallSegments) * Math.PI * 2;
+            
+            const x1 = Math.cos(angle) * roomRadius;
+            const z1 = Math.sin(angle) * roomRadius;
+            const x2 = Math.cos(nextAngle) * roomRadius;
+            const z2 = Math.sin(nextAngle) * roomRadius;
+            
+            // Create wall segment
+            const wallGeometry = new THREE.BoxGeometry(
+              Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(z2 - z1, 2)),
+              roomHeight,
+              0.2
+            );
+            
+            const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+            wall.position.set((x1 + x2) / 2, roomHeight / 2, (z1 + z2) / 2);
+            wall.lookAt(0, roomHeight / 2, 0);
+            wall.receiveShadow = true;
+            wall.castShadow = true;
+            
+            scene.add(wall);
+          }
+        }
+        
+        // Add central floating platform
+        const platformGeometry = new THREE.CylinderGeometry(5, 5, 0.2, 32);
+        const platformMaterial = new THREE.MeshStandardMaterial({
+          color: 0x222222,
+          roughness: 0.3,
+          metalness: 0.8
+        });
+        
+        const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+        platform.position.set(0, 0.1, 0);
+        platform.receiveShadow = true;
+        scene.add(platform);
+        
+        // Add floating decorative elements
+        for (let i = 0; i < 15; i++) {
+          const size = Math.random() * 0.5 + 0.2;
+          const geometry = new THREE.BoxGeometry(size, size, size);
+          const material = new THREE.MeshStandardMaterial({
+            color: 0x3498db,
+            roughness: 0.3,
+            metalness: 0.8,
+            emissive: 0x3498db,
+            emissiveIntensity: 0.2
+          });
+          
+          const cube = new THREE.Mesh(geometry, material);
+          
+          // Random position within the room
+          const radius = Math.random() * 15;
+          const angle = Math.random() * Math.PI * 2;
+          const height = Math.random() * 6 + 1;
+          
+          cube.position.set(
+            Math.cos(angle) * radius,
+            height,
+            Math.sin(angle) * radius
+          );
+          
+          // Add subtle animation
+          cube.userData.floatSpeed = Math.random() * 0.002 + 0.001;
+          cube.userData.rotateSpeed = Math.random() * 0.01 + 0.005;
+          cube.userData.floatHeight = height;
+          cube.userData.floatOffset = Math.random() * Math.PI * 2;
+          
+          scene.add(cube);
+        }
+        
+        // Add a central holographic display
+        const holoGeometry = new THREE.CylinderGeometry(1, 1, 4, 32, 1, true);
+        const holoMaterial = new THREE.MeshBasicMaterial({
+          color: 0x3498db,
+          transparent: true,
+          opacity: 0.2,
+          side: THREE.DoubleSide
+        });
+        
+        const hologram = new THREE.Mesh(holoGeometry, holoMaterial);
+        hologram.position.set(0, 2, 0);
+        scene.add(hologram);
+        
+        // Add animation data
+        hologram.userData.floatSpeed = 0.0005;
+        hologram.userData.rotateSpeed = 0.005;
+        hologram.userData.floatHeight = hologram.position.y;
+        hologram.userData.floatOffset = 0;
+      }
+      
+      // Create artwork displays
+      function createArtworkDisplays() {
+        // Position artworks in a circle in the main room
+        const radius = 10;
+        const artworkCount = artworks.length;
+        
+        for (let i = 0; i < artworkCount; i++) {
+          const angle = (i / artworkCount) * Math.PI * 2;
+          const x = Math.cos(angle) * radius;
+          const z = Math.sin(angle) * radius;
+          
+          createArtworkDisplay(artworks[i], x, z, angle);
+        }
+      }
+      
+      // Create a single artwork display
+      function createArtworkDisplay(artwork, x, z, angle) {
+        // Load texture
+        const textureLoader = new THREE.TextureLoader();
+        
+        textureLoader.load(artwork.image, (texture) => {
+          // Create frame
+          const frameWidth = 4;
+          const frameHeight = frameWidth * (9/16); // 16:9 aspect ratio
+          const frameDepth = 0.1;
+          
+          // Create artwork plane
+          const artGeometry = new THREE.PlaneGeometry(frameWidth - 0.2, frameHeight - 0.2);
+          const artMaterial = new THREE.MeshBasicMaterial({
+            map: texture,
+            side: THREE.DoubleSide
+          });
+          
+          const artPlane = new THREE.Mesh(artGeometry, artMaterial);
+          artPlane.position.set(x, 2, z);
+          artPlane.lookAt(0, 2, 0);
+          artPlane.position.y = 2;
+          // Move slightly forward from the exact position to avoid z-fighting
+          artPlane.position.x = x * 0.99;
+          artPlane.position.z = z * 0.99;
+          
+          // Store artwork data for interaction
+          artPlane.userData.isArtwork = true;
+          artPlane.userData.title = artwork.title;
+          artPlane.userData.description = artwork.description;
+          
+          scene.add(artPlane);
+          artworkObjects.push(artPlane);
+          
+          // Create frame - more minimalist and futuristic
+          const frameMaterial = new THREE.MeshStandardMaterial({
+            color: 0x333333,
+            roughness: 0.3,
+            metalness: 0.9,
+            emissive: 0x3498db,
+            emissiveIntensity: 0.1
+          });
+          
+          // Create thin frame segments instead of a box
+          const frameThickness = 0.05;
+          
+          // Top frame
+          const topFrameGeometry = new THREE.BoxGeometry(frameWidth, frameThickness, frameDepth);
+          const topFrame = new THREE.Mesh(topFrameGeometry, frameMaterial);
+          topFrame.position.set(x, 2 + frameHeight/2, z);
+          topFrame.lookAt(0, 2 + frameHeight/2, 0);
+          scene.add(topFrame);
+          
+          // Bottom frame
+          const bottomFrameGeometry = new THREE.BoxGeometry(frameWidth, frameThickness, frameDepth);
+          const bottomFrame = new THREE.Mesh(bottomFrameGeometry, frameMaterial);
+          bottomFrame.position.set(x, 2 - frameHeight/2, z);
+          bottomFrame.lookAt(0, 2 - frameHeight/2, 0);
+          scene.add(bottomFrame);
+          
+          // Left frame
+          const leftFrameGeometry = new THREE.BoxGeometry(frameThickness, frameHeight, frameDepth);
+          const leftFrame = new THREE.Mesh(leftFrameGeometry, frameMaterial);
+          leftFrame.position.copy(artPlane.position);
+          leftFrame.position.x = x * 0.99 - frameWidth/2 + frameThickness/2;
+          leftFrame.lookAt(0, 2, 0);
+          scene.add(leftFrame);
+          
+          // Right frame
+          const rightFrameGeometry = new THREE.BoxGeometry(frameThickness, frameHeight, frameDepth);
+          const rightFrame = new THREE.Mesh(rightFrameGeometry, frameMaterial);
+          rightFrame.position.copy(artPlane.position);
+          rightFrame.position.x = x * 0.99 + frameWidth/2 - frameThickness/2;
+          rightFrame.lookAt(0, 2, 0);
+          scene.add(rightFrame);
+          
+          // Add spotlight for the artwork
+          const spotLight = new THREE.SpotLight(0xffffff, 2, 10, Math.PI / 6, 0.5);
+          spotLight.position.set(x * 0.8, 4, z * 0.8);
+          spotLight.target.position.set(x, 2, z);
+          spotLight.castShadow = true;
+          
+          scene.add(spotLight);
+          scene.add(spotLight.target);
+        });
+      }
+      
+      // Create lighting for the gallery
+      function createLighting() {
+        // Ambient light
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+        scene.add(ambientLight);
+        
+        // Hallway lighting
+        createHallwayLighting();
+        
+        // Main room lighting
+        createMainRoomLighting();
+      }
+      
+      // Create hallway lighting
+      function createHallwayLighting() {
+        // Add a series of small lights along the hallway
+        for (let i = 0; i < 6; i++) {
+          const light = new THREE.PointLight(0xffffff, 0.3, 8);
+          light.position.set(0, 4, 25 - i * 5);
+          light.castShadow = true;
+          scene.add(light);
+        }
+      }
+      
+      // Create main room lighting
+      function createMainRoomLighting() {
+        // Center light
+        const centerLight = new THREE.PointLight(0xffffff, 0.5, 20);
+        centerLight.position.set(0, 6, 0);
+        centerLight.castShadow = true;
+        scene.add(centerLight);
+        
+        // Add some colored accent lights
+        const colors = [0x3498db, 0x9b59b6, 0x2ecc71];
+        
+        for (let i = 0; i < colors.length; i++) {
+          const angle = (i / colors.length) * Math.PI * 2;
+          const x = Math.cos(angle) * 12;
+          const z = Math.sin(angle) * 12;
+          
+          const light = new THREE.PointLight(colors[i], 0.5, 15);
+          light.position.set(x, 3, z);
+          scene.add(light);
+        }
+      }
+      
+      // Handle window resize
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        controls.handleResize();
+      }
+      
+      // Handle mouse movement for raycasting
+      function onMouseMove(event) {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      }
+      
+      // Handle mouse clicks for artwork interaction
+      function onMouseClick(event) {
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(artworkObjects);
+        
+        if (intersects.length > 0) {
+          const artwork = intersects[0].object;
+          if (artwork.userData.isArtwork) {
+            showArtworkInfo(artwork.userData);
+          }
+        }
+      }
+      
+      // Show artwork info panel
+      function showArtworkInfo(artworkData) {
+        const infoPanel = document.getElementById('artwork-info');
+        const titleElement = document.getElementById('artwork-title');
+        const descriptionElement = document.getElementById('artwork-description');
+        
+        titleElement.textContent = artworkData.title;
+        descriptionElement.textContent = artworkData.description;
+        
+        infoPanel.classList.add('visible');
+        
+        // Hide after 5 seconds
+        setTimeout(() => {
+          infoPanel.classList.remove('visible');
+        }, 5000);
+      }
+      
+      // Animate floating elements
+      function animateFloatingElements(deltaTime) {
+        scene.traverse((object) => {
+          if (object instanceof THREE.Mesh && object.userData.floatSpeed) {
+            // Float up and down
+            object.position.y = object.userData.floatHeight + 
+              Math.sin(clock.elapsedTime + object.userData.floatOffset) * 0.2;
+            
+            // Rotate
+            object.rotation.x += object.userData.rotateSpeed * deltaTime;
+            object.rotation.y += object.userData.rotateSpeed * deltaTime;
+          }
+        });
+      }
+      
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+        
+        const delta = clock.getDelta();
+        controls.update(delta);
+        
+        // Animate floating elements
+        animateFloatingElements(delta);
+        
+        // Update player character position to follow camera
+        if (playerCharacter) {
+          // Position slightly in front and below the camera
+          const cameraDirection = new THREE.Vector3(0, 0, -1);
+          cameraDirection.applyQuaternion(camera.quaternion);
+          
+          // Position the character in front of the camera
+          playerCharacter.position.copy(camera.position);
+          playerCharacter.position.y -= 1.2; // Below the camera viewpoint
+          
+          // Make the character face the same direction as the camera
+          playerCharacter.rotation.y = camera.rotation.y;
+        }
+        
+        renderer.render(scene, camera);
+      }
+      
+      // Start the gallery
+      init();
+    }
+  </script>
+</body>
+</html> 

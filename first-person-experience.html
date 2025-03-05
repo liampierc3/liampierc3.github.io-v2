@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minimalist First-Person Experience</title>
+  <style>
+    :root {
+      --background: #000000;
+      --foreground: #ffffff;
+      --accent: #3498db;
+      --muted: #888888;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--foreground);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+
+    canvas {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* UI Elements */
+    .ui-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .ui-element {
+      pointer-events: auto;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 500;
+      letter-spacing: 1px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav a {
+      color: inherit;
+      text-decoration: none;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      font-weight: 500;
+    }
+
+    .nav a:hover {
+      opacity: 1;
+    }
+
+    /* Controls */
+    .controls {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      padding: 0.75rem 1.5rem;
+      border-radius: 2rem;
+      font-size: 0.875rem;
+      color: var(--muted);
+      z-index: 10;
+    }
+
+    /* Loading screen */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--background);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      transition: opacity 0.8s;
+    }
+
+    .loading-text {
+      font-size: 1.5rem;
+      letter-spacing: 0.2em;
+      margin-bottom: 2rem;
+    }
+
+    .loading-bar-container {
+      width: 300px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .loading-bar {
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      transition: width 0.2s;
+    }
+
+    /* Fallback message */
+    #fallback-message {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 5;
+      background: rgba(0,0,0,0.8);
+      padding: 2rem;
+      border-radius: 0.5rem;
+      max-width: 80%;
+    }
+
+    /* Crosshair */
+    .crosshair {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 20;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: white;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    /* Info panel */
+    .info-panel {
+      display: none;
+      position: fixed;
+      bottom: 6rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      width: 80%;
+      max-width: 500px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      z-index: 15;
+    }
+
+    .info-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .info-description {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div id="experience-container">
+    <div class="loading-screen" id="loading-screen">
+      <div class="loading-text">LOADING</div>
+      <div class="loading-bar-container">
+        <div class="loading-bar" id="loading-bar"></div>
+      </div>
+    </div>
+    
+    <div class="ui-container">
+      <div class="ui-element top-right">
+        <a href="index.html" class="nav-link">Back to Home</a>
+      </div>
+      
+      <div class="ui-element center crosshair">
+        <div class="crosshair-dot"></div>
+      </div>
+      
+      <div class="ui-element bottom-left controls-info">
+        W, A, S, D - Move<br>
+        Space - Jump<br>
+        Mouse - Look around<br>
+        Click - Interact
+      </div>
+    </div>
+    
+    <div id="fallback-message">
+      <h2>3D Experience Not Available</h2>
+      <p>Your browser doesn't support the required technologies or an error occurred.</p>
+      <a href="index.html">Return to Homepage</a>
+    </div>
+  </div>
+  
+  <!-- Local Three.js libraries instead of CDN links -->
+  <script src="js/three/three.min.js"></script>
+  <script src="js/three/examples/js/controls/PointerLockControls.js"></script>
+  <script src="js/three/examples/js/loaders/GLTFLoader.js"></script>
+  
+  <script>
+    // Wait for DOM content to load
+    document.addEventListener('DOMContentLoaded', () => {
+      // Simulate loading progress
+      const loadingBar = document.getElementById('loading-bar');
+      let progress = 0;
+      const loadingInterval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(loadingInterval);
+          setTimeout(() => {
+            document.getElementById('loading-screen').style.opacity = 0;
+            setTimeout(() => {
+              document.getElementById('loading-screen').style.display = 'none';
+            }, 800);
+          }, 500);
+        }
+        loadingBar.style.width = `${progress}%`;
+      }, 200);
+
+      // Check if Three.js is available
+      window.addEventListener('load', () => {
+        try {
+          if (typeof THREE === 'undefined') {
+            throw new Error('Three.js not loaded');
+          }
+          
+          // Try to create a renderer to test WebGL support
+          try {
+            const testRenderer = new THREE.WebGLRenderer();
+            testRenderer.dispose();
+            init3DExperience();
+          } catch (e) {
+            throw new Error('WebGL initialization failed');
+          }
+        } catch (error) {
+          console.error('3D Experience error:', error);
+          document.getElementById('loading-screen').style.display = 'none';
+          document.getElementById('fallback-message').style.display = 'block';
+        }
+      });
+
+      // Initialize the 3D experience
+      function init3DExperience() {
+        // Configuration
+        const config = {
+          environment: {
+            groundColor: 0x050505,
+            skyColor: 0x000000,
+            fogColor: 0x000000,
+            fogDensity: 0.02
+          },
+          lighting: {
+            ambient: 0x222222,
+            spotlights: 0xffffff,
+            pointLights: 0x3498db
+          }
+        };
+        
+        // Three.js variables
+        let scene, camera, renderer, controls;
+        let moveForward = false;
+        let moveBackward = false;
+        let moveLeft = false;
+        let moveRight = false;
+        
+        let prevTime = performance.now();
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        
+        // Raycaster for object interaction
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        // Interactive objects
+        let interactiveObjects = [];
+
+        // Initialize scene, camera, renderer
+        function init() {
+          // Create scene
+          scene = new THREE.Scene();
+          scene.background = new THREE.Color(config.environment.skyColor);
+          scene.fog = new THREE.FogExp2(config.environment.fogColor, config.environment.fogDensity);
+          
+          // Create camera
+          camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+          camera.position.y = 1.7; // Average eye height
+          
+          // Create renderer
+          renderer = new THREE.WebGLRenderer({ antialias: true });
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          renderer.setPixelRatio(window.devicePixelRatio);
+          renderer.shadowMap.enabled = true;
+          document.getElementById('canvas-container').appendChild(renderer.domElement);
+          
+          // Create controls
+          controls = new THREE.PointerLockControls(camera, document.body);
+          
+          // Click to lock controls
+          document.addEventListener('click', () => {
+            controls.lock();
+          });
+          
+          // Controls events
+          controls.addEventListener('lock', () => {
+            document.getElementById('loading-screen').style.display = 'none';
+          });
+          
+          controls.addEventListener('unlock', () => {
+            // Optional: Handle when pointer lock is exited
+          });
+          
+          // Create environment
+          createEnvironment();
+          
+          // Add lights
+          createLights();
+          
+          // Add interactive objects
+          addInteractiveObjects();
+          
+          // Add event listeners
+          document.addEventListener('keydown', onKeyDown, false);
+          document.addEventListener('keyup', onKeyUp, false);
+          window.addEventListener('resize', onWindowResize, false);
+          document.addEventListener('click', onMouseClick, false);
+          
+          // Start animation loop
+          animate();
+        }
+        
+        // Create environment
+        function createEnvironment() {
+          // Create a large grid floor
+          const gridSize = 100;
+          const gridDivisions = 100;
+          const gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x3498db, 0x121212);
+          scene.add(gridHelper);
+          
+          // Create ground plane
+          const groundGeometry = new THREE.PlaneGeometry(200, 200);
+          const groundMaterial = new THREE.MeshStandardMaterial({ 
+            color: config.environment.groundColor,
+            roughness: 0.8,
+            metalness: 0.2
+          });
+          const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+          ground.rotation.x = -Math.PI / 2;
+          ground.receiveShadow = true;
+          scene.add(ground);
+          
+          // Create a minimalist, futuristic hallway
+          createHallway();
+          
+          // Create distant structures for atmosphere
+          createDistantStructures();
+        }
+        
+        // Create a futuristic hallway
+        function createHallway() {
+          const hallwayLength = 60;
+          const hallwayWidth = 8;
+          const hallwayHeight = 4;
+          
+          // Wall material with emissive rim light effect
+          const wallMaterial = new THREE.MeshStandardMaterial({
+            color: 0x0a0a0a,
+            roughness: 0.5,
+            metalness: 0.8,
+            emissive: 0x0a0a0a,
+            emissiveIntensity: 0.2
+          });
+          
+          // Floor with grid lines
+          const floorGeometry = new THREE.PlaneGeometry(hallwayWidth, hallwayLength);
+          const floorTexture = new THREE.TextureLoader().load(createGridTexture());
+          floorTexture.wrapS = THREE.RepeatWrapping;
+          floorTexture.wrapT = THREE.RepeatWrapping;
+          floorTexture.repeat.set(4, 20);
+          
+          const floorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x090909,
+            roughness: 0.7,
+            metalness: 0.3,
+            map: floorTexture
+          });
+          
+          const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+          floor.rotation.x = -Math.PI / 2;
+          floor.position.z = -hallwayLength / 2;
+          floor.receiveShadow = true;
+          scene.add(floor);
+          
+          // Ceiling
+          const ceilingGeometry = new THREE.PlaneGeometry(hallwayWidth, hallwayLength);
+          const ceilingMaterial = new THREE.MeshStandardMaterial({
+            color: 0x080808,
+            roughness: 0.9,
+            metalness: 0.1
+          });
+          
+          const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+          ceiling.rotation.x = Math.PI / 2;
+          ceiling.position.y = hallwayHeight;
+          ceiling.position.z = -hallwayLength / 2;
+          ceiling.receiveShadow = true;
+          scene.add(ceiling);
+          
+          // Left wall
+          const leftWallGeometry = new THREE.PlaneGeometry(hallwayLength, hallwayHeight);
+          const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
+          leftWall.position.x = -hallwayWidth / 2;
+          leftWall.position.y = hallwayHeight / 2;
+          leftWall.position.z = -hallwayLength / 2;
+          leftWall.rotation.y = Math.PI / 2;
+          leftWall.receiveShadow = true;
+          scene.add(leftWall);
+          
+          // Right wall
+          const rightWallGeometry = new THREE.PlaneGeometry(hallwayLength, hallwayHeight);
+          const rightWall = new THREE.Mesh(rightWallGeometry, wallMaterial);
+          rightWall.position.x = hallwayWidth / 2;
+          rightWall.position.y = hallwayHeight / 2;
+          rightWall.position.z = -hallwayLength / 2;
+          rightWall.rotation.y = -Math.PI / 2;
+          rightWall.receiveShadow = true;
+          scene.add(rightWall);
+          
+          // End wall
+          const endWallGeometry = new THREE.PlaneGeometry(hallwayWidth, hallwayHeight);
+          const endWall = new THREE.Mesh(endWallGeometry, wallMaterial);
+          endWall.position.z = -hallwayLength;
+          endWall.position.y = hallwayHeight / 2;
+          endWall.receiveShadow = true;
+          scene.add(endWall);
+          
+          // Add glowing strips along the hallway
+          const stripGeometry = new THREE.PlaneGeometry(0.1, hallwayLength);
+          const stripMaterial = new THREE.MeshBasicMaterial({
+            color: 0x3498db,
+            side: THREE.DoubleSide,
+            emissive: 0x3498db,
+            emissiveIntensity: 1
+          });
+          
+          // Left strip
+          const leftStrip = new THREE.Mesh(stripGeometry, stripMaterial);
+          leftStrip.rotation.x = -Math.PI / 2;
+          leftStrip.position.set(-hallwayWidth/2 + 0.05, 0.02, -hallwayLength/2);
+          scene.add(leftStrip);
+          
+          // Right strip
+          const rightStrip = new THREE.Mesh(stripGeometry, stripMaterial);
+          rightStrip.rotation.x = -Math.PI / 2;
+          rightStrip.position.set(hallwayWidth/2 - 0.05, 0.02, -hallwayLength/2);
+          scene.add(rightStrip);
+          
+          // Add floating holographic panels along the hallway
+          for (let i = 0; i < 5; i++) {
+            createHolographicPanel(-hallwayWidth/2 + 0.2, 1.5, -hallwayLength + 10 + i * 10, Math.PI / 2, i);
+            createHolographicPanel(hallwayWidth/2 - 0.2, 1.5, -hallwayLength + 10 + i * 10, -Math.PI / 2, i + 5);
+          }
+        }
+        
+        // Create a holographic panel
+        function createHolographicPanel(x, y, z, rotation, index) {
+          const panelGeometry = new THREE.PlaneGeometry(1.5, 0.8);
+          const panelMaterial = new THREE.MeshBasicMaterial({
+            color: 0x3498db,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide
+          });
+          
+          const panel = new THREE.Mesh(panelGeometry, panelMaterial);
+          panel.position.set(x, y, z);
+          panel.rotation.y = rotation;
+          scene.add(panel);
+          
+          // Add animation data
+          panel.userData.floatSpeed = 0.001;
+          panel.userData.rotateSpeed = 0.001;
+          panel.userData.floatHeight = panel.position.y;
+          panel.userData.floatOffset = index * Math.PI / 3;
+          panel.userData.isInteractive = true;
+          panel.userData.info = {
+            title: `Information Panel ${index + 1}`,
+            description: `This is an interactive data panel containing information about the environment. Click to learn more about this sector.`
+          };
+          
+          // Add to interactive objects
+          interactiveObjects.push(panel);
+        }
+        
+        // Create distant structures for ambience
+        function createDistantStructures() {
+          // Create some distant monoliths/structures
+          for (let i = 0; i < 15; i++) {
+            const height = Math.random() * 20 + 10;
+            const width = Math.random() * 4 + 1;
+            const depth = Math.random() * 4 + 1;
+            
+            const geometry = new THREE.BoxGeometry(width, height, depth);
+            const material = new THREE.MeshStandardMaterial({
+              color: 0x0a0a0a,
+              roughness: 0.8,
+              metalness: 0.5,
+              emissive: 0x3498db,
+              emissiveIntensity: 0.1
+            });
+            
+            const monolith = new THREE.Mesh(geometry, material);
+            
+            // Position randomly in the distance
+            const distance = Math.random() * 80 + 40;
+            const angle = Math.random() * Math.PI * 2;
+            
+            monolith.position.set(
+              Math.cos(angle) * distance,
+              height / 2,
+              Math.sin(angle) * distance
+            );
+            
+            monolith.castShadow = true;
+            monolith.receiveShadow = true;
+            
+            scene.add(monolith);
+          }
+        }
+        
+        // Create lighting for the environment
+        function createLights() {
+          // Ambient light
+          const ambientLight = new THREE.AmbientLight(config.lighting.ambient, 1);
+          scene.add(ambientLight);
+          
+          // Add point lights along the hallway
+          for (let i = 0; i < 6; i++) {
+            const pointLight = new THREE.PointLight(config.lighting.pointLights, 1, 10);
+            pointLight.position.set(0, 3.5, -i * 10);
+            scene.add(pointLight);
+            
+            // Add a small glowing sphere at each light position
+            const sphereGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+            const sphereMaterial = new THREE.MeshBasicMaterial({ 
+              color: config.lighting.pointLights,
+              emissive: config.lighting.pointLights,
+              emissiveIntensity: 1
+            });
+            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere.position.copy(pointLight.position);
+            scene.add(sphere);
+          }
+          
+          // Distant bluish glow from "outside"
+          const distantLight1 = new THREE.DirectionalLight(0x3498db, 0.2);
+          distantLight1.position.set(50, 30, 50);
+          scene.add(distantLight1);
+          
+          const distantLight2 = new THREE.DirectionalLight(0x3498db, 0.2);
+          distantLight2.position.set(-50, 30, -50);
+          scene.add(distantLight2);
+        }
+        
+        // Add interactive objects to the scene
+        function addInteractiveObjects() {
+          // Central floating object at the end of the hallway
+          const geometry = new THREE.OctahedronGeometry(1, 0);
+          const material = new THREE.MeshStandardMaterial({
+            color: 0x3498db,
+            roughness: 0.2,
+            metalness: 0.8,
+            emissive: 0x3498db,
+            emissiveIntensity: 0.5
+          });
+          
+          const centralObject = new THREE.Mesh(geometry, material);
+          centralObject.position.set(0, 2, -55);
+          scene.add(centralObject);
+          
+          centralObject.userData.isInteractive = true;
+          centralObject.userData.info = {
+            title: "Central Terminal",
+            description: "This is the main terminal of the system. It contains the primary interface for navigating the digital space. Approach to establish a connection."
+          };
+          
+          // Animation data
+          centralObject.userData.floatSpeed = 0.002;
+          centralObject.userData.rotateSpeed = 0.01;
+          centralObject.userData.floatHeight = centralObject.position.y;
+          centralObject.userData.floatOffset = 0;
+          
+          interactiveObjects.push(centralObject);
+          
+          // Add floating cubes around the central object
+          for (let i = 0; i < 5; i++) {
+            const smallGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const smallMaterial = new THREE.MeshStandardMaterial({
+              color: 0x3498db,
+              roughness: 0.3,
+              metalness: 0.7,
+              emissive: 0x3498db,
+              emissiveIntensity: 0.3,
+              transparent: true,
+              opacity: 0.7
+            });
+            
+            const cube = new THREE.Mesh(smallGeometry, smallMaterial);
+            
+            // Position in a circle around the central object
+            const angle = (i / 5) * Math.PI * 2;
+            const radius = 2;
+            
+            cube.position.set(
+              centralObject.position.x + Math.cos(angle) * radius,
+              centralObject.position.y,
+              centralObject.position.z + Math.sin(angle) * radius
+            );
+            
+            // Animation data
+            cube.userData.floatSpeed = 0.003;
+            cube.userData.rotateSpeed = 0.02;
+            cube.userData.floatHeight = cube.position.y;
+            cube.userData.floatOffset = i * Math.PI / 2.5;
+            cube.userData.orbitSpeed = 0.01;
+            cube.userData.orbitRadius = radius;
+            cube.userData.orbitCenter = new THREE.Vector3(centralObject.position.x, centralObject.position.y, centralObject.position.z);
+            cube.userData.orbitAngle = angle;
+            
+            scene.add(cube);
+          }
+        }
+        
+        // Handle window resize
+        function onWindowResize() {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // Handle key down events
+        function onKeyDown(event) {
+          switch (event.code) {
+            case 'ArrowUp':
+            case 'KeyW':
+              moveForward = true;
+              break;
+            case 'ArrowLeft':
+            case 'KeyA':
+              moveLeft = true;
+              break;
+            case 'ArrowDown':
+            case 'KeyS':
+              moveBackward = true;
+              break;
+            case 'ArrowRight':
+            case 'KeyD':
+              moveRight = true;
+              break;
+          }
+        }
+        
+        // Handle key up events
+        function onKeyUp(event) {
+          switch (event.code) {
+            case 'ArrowUp':
+            case 'KeyW':
+              moveForward = false;
+              break;
+            case 'ArrowLeft':
+            case 'KeyA':
+              moveLeft = false;
+              break;
+            case 'ArrowDown':
+            case 'KeyS':
+              moveBackward = false;
+              break;
+            case 'ArrowRight':
+            case 'KeyD':
+              moveRight = false;
+              break;
+          }
+        }
+        
+        // Handle mouse click for interaction
+        function onMouseClick(event) {
+          if (controls.isLocked) {
+            // Center of screen for raycasting
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+            
+            const intersects = raycaster.intersectObjects(scene.children);
+            
+            for (let i = 0; i < intersects.length; i++) {
+              const object = intersects[i].object;
+              
+              if (object.userData.isInteractive) {
+                showInfoPanel(object.userData.info.title, object.userData.info.description);
+                break;
+              }
+            }
+          }
+        }
+        
+        // Show info panel with title and description
+        function showInfoPanel(title, description) {
+          const infoPanel = document.getElementById('info-panel');
+          const infoTitle = document.getElementById('info-title');
+          const infoDescription = document.getElementById('info-description');
+          
+          infoTitle.textContent = title;
+          infoDescription.textContent = description;
+          infoPanel.style.display = 'block';
+          
+          // Hide panel after 5 seconds
+          setTimeout(() => {
+            infoPanel.style.display = 'none';
+          }, 5000);
+        }
+        
+        // Animation loop
+        function animate() {
+          requestAnimationFrame(animate);
+          
+          const time = performance.now();
+          
+          if (controls.isLocked) {
+            // Calculate time delta for smooth movement
+            const delta = (time - prevTime) / 1000;
+            
+            // Apply friction
+            velocity.x -= velocity.x * 10.0 * delta;
+            velocity.z -= velocity.z * 10.0 * delta;
+            
+            // Calculate movement direction
+            direction.z = Number(moveForward) - Number(moveBackward);
+            direction.x = Number(moveRight) - Number(moveLeft);
+            direction.normalize(); // Normalize for consistent movement in all directions
+            
+            // Apply movement velocity
+            const moveSpeed = 5.0;
+            if (moveForward || moveBackward) velocity.z -= direction.z * moveSpeed * delta;
+            if (moveLeft || moveRight) velocity.x -= direction.x * moveSpeed * delta;
+            
+            // Apply movement
+            controls.moveRight(-velocity.x * delta);
+            controls.moveForward(-velocity.z * delta);
+            
+            // Animate objects
+            scene.traverse(object => {
+              // Floating animation
+              if (object.userData.floatHeight !== undefined) {
+                object.position.y = object.userData.floatHeight + 
+                  Math.sin(time * 0.001 + object.userData.floatOffset) * 0.1;
+              }
+              
+              // Rotation animation
+              if (object.userData.rotateSpeed !== undefined) {
+                object.rotation.y += object.userData.rotateSpeed * delta;
+                object.rotation.z += object.userData.rotateSpeed * 0.5 * delta;
+              }
+              
+              // Orbit animation
+              if (object.userData.orbitCenter !== undefined) {
+                object.userData.orbitAngle += object.userData.orbitSpeed;
+                object.position.x = object.userData.orbitCenter.x + 
+                  Math.cos(object.userData.orbitAngle) * object.userData.orbitRadius;
+                object.position.z = object.userData.orbitCenter.z + 
+                  Math.sin(object.userData.orbitAngle) * object.userData.orbitRadius;
+              }
+            });
+            
+            // Highlight interactive objects when looking at them
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+            const intersects = raycaster.intersectObjects(scene.children);
+            let foundInteractive = false;
+            
+            for (let i = 0; i < intersects.length; i++) {
+              const object = intersects[i].object;
+              
+              if (object.userData.isInteractive) {
+                foundInteractive = true;
+                document.body.style.cursor = 'pointer';
+                break;
+              }
+            }
+            
+            if (!foundInteractive) {
+              document.body.style.cursor = 'default';
+            }
+          }
+          
+          prevTime = time;
+          renderer.render(scene, camera);
+        }
+        
+        // Create a grid texture
+        function createGridTexture() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 64;
+          canvas.height = 64;
+          const context = canvas.getContext('2d');
+          
+          // Fill with black
+          context.fillStyle = '#000000';
+          context.fillRect(0, 0, 64, 64);
+          
+          // Draw grid lines
+          context.strokeStyle = '#0a4977';
+          context.lineWidth = 1;
+          context.beginPath();
+          
+          // Horizontal line
+          context.moveTo(0, 32);
+          context.lineTo(64, 32);
+          
+          // Vertical line
+          context.moveTo(32, 0);
+          context.lineTo(32, 64);
+          
+          context.stroke();
+          
+          return canvas.toDataURL();
+        }
+        
+        // Start the 3D experience
+        init();
+      }
+    });
+  </script>
+</body>
+</html> 

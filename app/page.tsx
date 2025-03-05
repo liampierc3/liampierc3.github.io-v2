@@ -24,14 +24,19 @@ export default function Home() {
     setFormStatus("Sending...")
 
     try {
-      const response = await fetch("/api/contact", {
+      // For a static site, we'll use Formspree as an example
+      // Replace the form action with your own Formspree form ID or another form service
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+      
+      const response = await fetch("https://formspree.io/f/YOUR_FORM_ID", {
         method: "POST",
+        body: formData,
         headers: {
-          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        body: JSON.stringify(formData),
-      })
-
+      });
+      
       if (response.ok) {
         setFormStatus("Message sent successfully!")
         setFormData({ name: "", email: "", message: "" })

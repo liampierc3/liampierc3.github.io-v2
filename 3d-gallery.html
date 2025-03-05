@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liam Pierce - 3D Art Gallery</title>
+  <meta name="description" content="Interactive 3D Art Gallery - Director / Editor / Cinematographer">
+  <base href="./">
+  <style>
+    /* Base styles */
+    :root {
+      --background: #000000;
+      --foreground: #ffffff;
+      --card: #0a0a0a;
+      --card-foreground: #ffffff;
+      --primary: #ffffff;
+      --primary-foreground: #000000;
+      --secondary: #262626;
+      --secondary-foreground: #ffffff;
+      --muted: #262626;
+      --muted-foreground: #a3a3a3;
+      --accent: #262626;
+      --accent-foreground: #ffffff;
+      --border: #262626;
+      --input: #262626;
+      --ring: #d4d4d4;
+      --zinc-900: #18181b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--foreground);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden; /* Prevent scrolling for full-screen 3D experience */
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    /* Navigation */
+    .nav {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .nav a {
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .nav a:hover {
+      opacity: 1;
+    }
+
+    /* Controls Instructions */
+    .controls {
+      position: fixed;
+      bottom: 1rem;
+      left: 1rem;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--muted-foreground);
+    }
+
+    /* Loading screen */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--background);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      transition: opacity 0.5s;
+    }
+
+    .loading-text {
+      font-size: 1.5rem;
+      letter-spacing: 0.2em;
+    }
+    
+    /* Fallback message */
+    #fallback-message {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 5;
+      background: rgba(0,0,0,0.8);
+      padding: 2rem;
+      border-radius: 0.5rem;
+      max-width: 80%;
+    }
+    
+    /* Gallery grid fallback */
+    .gallery-grid {
+      display: none;
+      padding: 5rem 2rem;
+      z-index: 2;
+      position: relative;
+      background-color: var(--background);
+      min-height: 100vh;
+    }
+    
+    .gallery-grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .gallery-item {
+      position: relative;
+      overflow: hidden;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+      aspect-ratio: 16/9;
+      cursor: pointer;
+    }
+    
+    .gallery-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s;
+    }
+    
+    .gallery-item:hover img {
+      transform: scale(1.05);
+    }
+    
+    .gallery-item-info {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 1rem;
+      transform: translateY(100%);
+      transition: transform 0.3s;
+    }
+    
+    .gallery-item:hover .gallery-item-info {
+      transform: translateY(0);
+    }
+    
+    .gallery-item-title {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .gallery-item-description {
+      font-size: 0.875rem;
+      color: var(--muted-foreground);
+    }
+
+    /* Gallery header */
+    .gallery-header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 3rem 1rem;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0));
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .gallery-title {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      position: relative;
+      display: inline-block;
+    }
+    
+    .gallery-title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background-color: #3498db;
+    }
+
+    .gallery-subtitle {
+      font-size: 1.25rem;
+      color: var(--muted-foreground);
+      max-width: 600px;
+      margin: 1.5rem auto 0;
+      line-height: 1.6;
+    }
+
+    /* Modal for enlarged images */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    .modal-content {
+      max-width: 90%;
+      max-height: 90%;
+      position: relative;
+    }
+
+    .modal-image {
+      max-width: 100%;
+      max-height: 80vh;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-info {
+      margin-top: 1rem;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-description {
+      font-size: 1rem;
+      color: var(--muted-foreground);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: -2rem;
+      right: -2rem;
+      font-size: 2rem;
+      color: white;
+      cursor: pointer;
+      background: none;
+      border: none;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-close:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Navigation arrows */
+    .modal-nav {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .modal-prev,
+    .modal-next {
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: background-color 0.3s;
+    }
+
+    .modal-prev:hover,
+    .modal-next:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .modal-prev {
+      margin-left: -25px;
+    }
+
+    .modal-next {
+      margin-right: -25px;
+    }
+
+    /* Footer styles */
+    .gallery-footer {
+      margin-top: 4rem;
+      padding: 2rem 1rem;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));
+    }
+    
+    .footer-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .footer-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .footer-text {
+      color: var(--muted-foreground);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .footer-link {
+      color: #3498db;
+      transition: color 0.3s;
+    }
+    
+    .footer-link:hover {
+      color: #2980b9;
+    }
+    
+    .footer-copyright {
+      font-size: 0.875rem;
+      color: var(--muted-foreground);
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loading-screen">
+    <div class="loading-text">LOADING GALLERY...</div>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">Liam Pierce</div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="gallery.html">2D Gallery</a>
+      <a href="3d-gallery.html">3D Gallery</a>
+    </nav>
+  </header>
+
+  <!-- Controls Instructions -->
+  <div class="controls">
+    <p>Move: WASD or Arrow Keys | Look: Mouse | Click on artwork to view details</p>
+  </div>
+
+  <!-- Main container for Three.js -->
+  <div id="canvas-container"></div>
+  
+  <!-- Fallback message if 3D doesn't load -->
+  <div id="fallback-message">
+    <h2 style="margin-bottom: 1rem; font-size: 2rem; color: #fff;">Welcome to Our Gallery</h2>
+    <p style="margin-bottom: 1.5rem; font-size: 1.1rem;">We've prepared an interactive 3D experience, but it looks like your device or browser might not support it.</p>
+    <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+      <p style="margin-bottom: 0.5rem; font-weight: bold;">This could be due to:</p>
+      <ul style="text-align: left; margin: 1rem 0; list-style-position: inside;">
+        <li style="margin-bottom: 0.5rem;">WebGL not being supported by your browser</li>
+        <li style="margin-bottom: 0.5rem;">3D libraries not loading correctly</li>
+        <li style="margin-bottom: 0.5rem;">Hardware acceleration being disabled</li>
+      </ul>
+    </div>
+    <p style="margin-bottom: 1.5rem;">Don't worry! We've created a beautiful 2D version of our gallery for you to enjoy.</p>
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="gallery.html" style="color: white; text-decoration: none; background: rgba(255,255,255,0.1); padding: 0.75rem 1.5rem; border-radius: 0.25rem; transition: background 0.3s;">View Standard Gallery</a>
+      <button id="show-2d-gallery" style="background: #3498db; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.25rem; cursor: pointer; font-size: 1rem; font-weight: bold; transition: background 0.3s;">Explore 2D Gallery</button>
+    </div>
+  </div>
+  
+  <!-- 2D Gallery Grid Fallback -->
+  <div class="gallery-grid" id="gallery-grid">
+    <div class="gallery-header">
+      <h1 class="gallery-title">Interactive Art Gallery</h1>
+      <p class="gallery-subtitle">Explore our collection of stunning visuals showcasing precision engineering and design excellence. Click on any image to view details.</p>
+    </div>
+    <div class="gallery-grid-container" id="gallery-grid-container">
+      <!-- Gallery items will be added here by JavaScript -->
+    </div>
+    <footer class="gallery-footer">
+      <div class="footer-content">
+        <h2 class="footer-title">Thank You for Visiting Our Gallery</h2>
+        <p class="footer-text">We're constantly updating our collection with new and exciting content. Check back regularly to see our latest additions.</p>
+        <div class="footer-links">
+          <a href="index.html" class="footer-link">Home</a>
+          <a href="gallery.html" class="footer-link">Standard Gallery</a>
+          <a href="#" class="footer-link">Contact</a>
+        </div>
+        <p class="footer-copyright">© 2024 Liam Pierce. All rights reserved.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Image Modal -->
+  <div class="modal" id="image-modal">
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close">&times;</button>
+      <img class="modal-image" id="modal-image" src="" alt="">
+      <div class="modal-info">
+        <h3 class="modal-title" id="modal-title"></h3>
+        <p class="modal-description" id="modal-description"></p>
+      </div>
+      <div class="modal-nav">
+        <button class="modal-prev" id="modal-prev">&lt;</button>
+        <button class="modal-next" id="modal-next">&gt;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/three/three.min.js"></script>
+  <script src="js/three/examples/js/controls/PointerLockControls.js"></script>
+
+  <script>
+    // Art pieces to display
+    const artworks = [
+      {
+        title: "Handmade mountain bike",
+        image: "https://img.youtube.com/vi/C3tVe_XPfo0/maxresdefault.jpg",
+        description: "A beautifully crafted handmade mountain bike showcasing precision engineering and design."
+      },
+      {
+        title: "Trail Performance",
+        image: "https://img.youtube.com/vi/Kn9jafKQ_PA/maxresdefault.jpg",
+        description: "High-performance trail riding capturing the thrill of mountain biking."
+      },
+      {
+        title: "Portal axle material science",
+        image: "https://img.youtube.com/vi/OUMHMSO6jeU/maxresdefault.jpg",
+        description: "An exploration of material science in portal axle design and engineering."
+      },
+      {
+        title: "Vinco performance",
+        image: "https://img.youtube.com/vi/flmcDnI_fdE/maxresdefault.jpg",
+        description: "Showcasing the exceptional performance capabilities of Vinco engineering."
+      },
+      {
+        title: "Carbon Fiber Design",
+        image: "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+        description: "Innovative carbon fiber design elements that combine lightweight properties with exceptional strength."
+      },
+      {
+        title: "Engineering Precision",
+        image: "https://images.unsplash.com/photo-1581093458791-9d09da56be89?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+        description: "Close-up detail showcasing the precision engineering that goes into every component."
+      },
+      {
+        title: "Mountain Adventure",
+        image: "https://images.unsplash.com/photo-1594076456781-7c8d2e9fca20?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+        description: "Capturing the spirit of adventure and the thrill of mountain exploration."
+      },
+      {
+        title: "Technical Innovation",
+        image: "https://images.unsplash.com/photo-1559348349-86f1f65817fe?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+        description: "Cutting-edge technical innovations that push the boundaries of what's possible in design and performance."
+      }
+    ];
+    
+    // Function to create 2D gallery as fallback
+    function create2DGallery() {
+      const container = document.getElementById('gallery-grid-container');
+      
+      artworks.forEach((artwork, index) => {
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.dataset.index = index;
+        
+        const img = document.createElement('img');
+        img.src = artwork.image;
+        img.alt = artwork.title;
+        
+        const info = document.createElement('div');
+        info.className = 'gallery-item-info';
+        
+        const title = document.createElement('h3');
+        title.className = 'gallery-item-title';
+        title.textContent = artwork.title;
+        
+        const description = document.createElement('p');
+        description.className = 'gallery-item-description';
+        description.textContent = artwork.description;
+        
+        info.appendChild(title);
+        info.appendChild(description);
+        
+        item.appendChild(img);
+        item.appendChild(info);
+        
+        // Add click event to open modal
+        item.addEventListener('click', () => {
+          openModal(index);
+        });
+        
+        container.appendChild(item);
+      });
+      
+      document.getElementById('gallery-grid').style.display = 'block';
+      
+      // Set up modal functionality
+      setupModal();
+    }
+    
+    // Set up modal functionality
+    function setupModal() {
+      const modal = document.getElementById('image-modal');
+      const modalImage = document.getElementById('modal-image');
+      const modalTitle = document.getElementById('modal-title');
+      const modalDescription = document.getElementById('modal-description');
+      const closeButton = document.getElementById('modal-close');
+      const prevButton = document.getElementById('modal-prev');
+      const nextButton = document.getElementById('modal-next');
+      
+      let currentIndex = 0;
+      
+      // Function to open modal with specific artwork
+      window.openModal = function(index) {
+        currentIndex = index;
+        updateModalContent();
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+      };
+      
+      // Update modal content based on current index
+      function updateModalContent() {
+        const artwork = artworks[currentIndex];
+        modalImage.src = artwork.image;
+        modalTitle.textContent = artwork.title;
+        modalDescription.textContent = artwork.description;
+      }
+      
+      // Close modal
+      closeButton.addEventListener('click', () => {
+        modal.style.display = 'none';
+        document.body.style.overflow = ''; // Restore scrolling
+      });
+      
+      // Navigate to previous image
+      prevButton.addEventListener('click', () => {
+        currentIndex = (currentIndex - 1 + artworks.length) % artworks.length;
+        updateModalContent();
+      });
+      
+      // Navigate to next image
+      nextButton.addEventListener('click', () => {
+        currentIndex = (currentIndex + 1) % artworks.length;
+        updateModalContent();
+      });
+      
+      // Close modal when clicking outside the content
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.style.display = 'none';
+          document.body.style.overflow = ''; // Restore scrolling
+        }
+      });
+      
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (modal.style.display === 'flex') {
+          if (e.key === 'Escape') {
+            modal.style.display = 'none';
+            document.body.style.overflow = ''; // Restore scrolling
+          } else if (e.key === 'ArrowLeft') {
+            currentIndex = (currentIndex - 1 + artworks.length) % artworks.length;
+            updateModalContent();
+          } else if (e.key === 'ArrowRight') {
+            currentIndex = (currentIndex + 1) % artworks.length;
+            updateModalContent();
+          }
+        }
+      });
+    }
+
+    // Show 2D gallery button
+    document.getElementById('show-2d-gallery').addEventListener('click', function() {
+      document.getElementById('fallback-message').style.display = 'none';
+      create2DGallery();
+    });
+
+    // Check if Three.js loaded correctly
+    window.addEventListener('load', function() {
+      try {
+        // Check if Three.js is available
+        if (typeof THREE === 'undefined') {
+          throw new Error('Three.js not loaded');
+        }
+        
+        // Check if WebGL is available
+        if (!THREE.WebGLRenderer) {
+          throw new Error('WebGL not supported');
+        }
+        
+        // Try to create a renderer to test WebGL support
+        try {
+          const testRenderer = new THREE.WebGLRenderer();
+          testRenderer.dispose();
+        } catch (e) {
+          throw new Error('WebGL initialization failed');
+        }
+        
+        // If we get here, we can initialize the 3D gallery
+        init3DGallery();
+        
+      } catch (error) {
+        console.error('3D Gallery error:', error);
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('fallback-message').style.display = 'block';
+      }
+    });
+    
+    // Initialize the 3D gallery
+    function init3DGallery() {
+      // Gallery configuration
+      const galleryConfig = {
+        roomWidth: 20,
+        roomHeight: 6,
+        roomDepth: 30,
+        wallColor: 0x1a1a1a,
+        floorColor: 0x0a0a0a,
+        lightIntensity: 0.8
+      };
+      
+      // Three.js variables
+      let scene, camera, renderer, controls;
+      let moveForward = false;
+      let moveBackward = false;
+      let moveLeft = false;
+      let moveRight = false;
+      
+      let prevTime = performance.now();
+      const velocity = new THREE.Vector3();
+      const direction = new THREE.Vector3();
+      
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+      
+      let artworkObjects = [];
+      let currentInfoPanel = null;
+      
+      // Initialize the scene
+      function init() {
+        // Scene
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        
+        // Camera
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.y = 1.7; // Average eye height
+        
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+        
+        // Controls
+        controls = new THREE.PointerLockControls(camera, document.body);
+        
+        // Click to lock controls
+        document.body.addEventListener('click', () => {
+          controls.lock();
+        });
+        
+        // Add event listeners for controls
+        controls.addEventListener('lock', () => {
+          document.getElementById('loading-screen').style.display = 'none';
+        });
+        
+        // Create the gallery
+        createGallery();
+        
+        // Add lights
+        createLights();
+        
+        // Add event listeners
+        document.addEventListener('keydown', onKeyDown, false);
+        document.addEventListener('keyup', onKeyUp, false);
+        window.addEventListener('resize', onWindowResize, false);
+        
+        // Start animation loop
+        animate();
+        
+        // Hide loading screen after everything is loaded
+        setTimeout(() => {
+          document.getElementById('loading-screen').style.opacity = 0;
+        }, 1500);
+      }
+      
+      // Create the gallery environment
+      function createGallery() {
+        // Create floor
+        const floorGeometry = new THREE.PlaneGeometry(galleryConfig.roomWidth, galleryConfig.roomDepth);
+        const floorMaterial = new THREE.MeshStandardMaterial({ 
+          color: galleryConfig.floorColor,
+          roughness: 0.8,
+          metalness: 0.2
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+        
+        // Create ceiling
+        const ceilingGeometry = new THREE.PlaneGeometry(galleryConfig.roomWidth, galleryConfig.roomDepth);
+        const ceilingMaterial = new THREE.MeshStandardMaterial({ 
+          color: galleryConfig.wallColor,
+          roughness: 0.9,
+          metalness: 0.1
+        });
+        const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+        ceiling.rotation.x = Math.PI / 2;
+        ceiling.position.y = galleryConfig.roomHeight;
+        ceiling.receiveShadow = true;
+        scene.add(ceiling);
+        
+        // Create walls
+        const wallMaterial = new THREE.MeshStandardMaterial({ 
+          color: galleryConfig.wallColor,
+          roughness: 0.8,
+          metalness: 0.2
+        });
+        
+        // Left wall
+        const leftWallGeometry = new THREE.PlaneGeometry(galleryConfig.roomDepth, galleryConfig.roomHeight);
+        const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
+        leftWall.position.x = -galleryConfig.roomWidth / 2;
+        leftWall.position.y = galleryConfig.roomHeight / 2;
+        leftWall.rotation.y = Math.PI / 2;
+        leftWall.receiveShadow = true;
+        scene.add(leftWall);
+        
+        // Right wall
+        const rightWallGeometry = new THREE.PlaneGeometry(galleryConfig.roomDepth, galleryConfig.roomHeight);
+        const rightWall = new THREE.Mesh(rightWallGeometry, wallMaterial);
+        rightWall.position.x = galleryConfig.roomWidth / 2;
+        rightWall.position.y = galleryConfig.roomHeight / 2;
+        rightWall.rotation.y = -Math.PI / 2;
+        rightWall.receiveShadow = true;
+        scene.add(rightWall);
+        
+        // Back wall
+        const backWallGeometry = new THREE.PlaneGeometry(galleryConfig.roomWidth, galleryConfig.roomHeight);
+        const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
+        backWall.position.z = -galleryConfig.roomDepth / 2;
+        backWall.position.y = galleryConfig.roomHeight / 2;
+        backWall.receiveShadow = true;
+        scene.add(backWall);
+        
+        // Front wall
+        const frontWallGeometry = new THREE.PlaneGeometry(galleryConfig.roomWidth, galleryConfig.roomHeight);
+        const frontWall = new THREE.Mesh(frontWallGeometry, wallMaterial);
+        frontWall.position.z = galleryConfig.roomDepth / 2;
+        frontWall.position.y = galleryConfig.roomHeight / 2;
+        frontWall.rotation.y = Math.PI;
+        frontWall.receiveShadow = true;
+        scene.add(frontWall);
+        
+        // Add artworks to the walls
+        const positions = [
+          { x: -9, y: 2, z: -10, rotation: 0 },
+          { x: -9, y: 2, z: -5, rotation: 0 },
+          { x: -9, y: 2, z: 0, rotation: 0 },
+          { x: -9, y: 2, z: 5, rotation: 0 },
+          { x: 9, y: 2, z: -10, rotation: Math.PI },
+          { x: 9, y: 2, z: -5, rotation: Math.PI },
+          { x: 9, y: 2, z: 0, rotation: Math.PI },
+          { x: 9, y: 2, z: 5, rotation: Math.PI }
+        ];
+        
+        // Add artworks
+        artworks.forEach((artwork, index) => {
+          if (index < positions.length) {
+            addArtwork(artwork, positions[index]);
+          }
+        });
+      }
+      
+      // Add an artwork to the scene
+      function addArtwork(artwork, position) {
+        const loader = new THREE.TextureLoader();
+        
+        loader.load(artwork.image, (texture) => {
+          const material = new THREE.MeshBasicMaterial({ 
+            map: texture,
+            side: THREE.DoubleSide
+          });
+          
+          const width = 4;
+          const height = 2.25;
+          
+          const geometry = new THREE.PlaneGeometry(width, height);
+          const mesh = new THREE.Mesh(geometry, material);
+          
+          mesh.position.set(position.x, position.y, position.z);
+          mesh.rotation.set(0, position.rotation, 0);
+          
+          scene.add(mesh);
+          
+          // Add a frame around the artwork
+          const frameWidth = width + 0.1;
+          const frameHeight = height + 0.1;
+          const frameDepth = 0.05;
+          
+          const frameGeometry = new THREE.BoxGeometry(frameWidth, frameHeight, frameDepth);
+          const frameMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x3a3a3a,
+            roughness: 0.5,
+            metalness: 0.7
+          });
+          
+          const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+          frame.position.set(position.x, position.y, position.z - 0.03);
+          frame.rotation.set(0, position.rotation, 0);
+          scene.add(frame);
+          
+          // Add a small light above each artwork
+          const spotLight = new THREE.SpotLight(0xffffff, 2, 10, Math.PI / 6, 0.5);
+          spotLight.position.set(
+            position.x,
+            position.y + 2,
+            position.z + 1.5
+          );
+          spotLight.target.position.set(position.x, position.y, position.z);
+          scene.add(spotLight);
+          scene.add(spotLight.target);
+        });
+      }
+      
+      // Create lighting for the gallery
+      function createLights() {
+        // Ambient light
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+        scene.add(ambientLight);
+        
+        // Main ceiling lights
+        for (let z = -10; z <= 10; z += 5) {
+          const ceilingLight = new THREE.PointLight(0xffffff, 0.5, 15, 2);
+          ceilingLight.position.set(0, galleryConfig.roomHeight - 0.5, z);
+          ceilingLight.castShadow = true;
+          scene.add(ceilingLight);
+        }
+      }
+      
+      // Handle window resize
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+      
+      // Handle key down events
+      function onKeyDown(event) {
+        switch (event.code) {
+          case 'ArrowUp':
+          case 'KeyW':
+            moveForward = true;
+            break;
+          case 'ArrowLeft':
+          case 'KeyA':
+            moveLeft = true;
+            break;
+          case 'ArrowDown':
+          case 'KeyS':
+            moveBackward = true;
+            break;
+          case 'ArrowRight':
+          case 'KeyD':
+            moveRight = true;
+            break;
+        }
+      }
+      
+      // Handle key up events
+      function onKeyUp(event) {
+        switch (event.code) {
+          case 'ArrowUp':
+          case 'KeyW':
+            moveForward = false;
+            break;
+          case 'ArrowLeft':
+          case 'KeyA':
+            moveLeft = false;
+            break;
+          case 'ArrowDown':
+          case 'KeyS':
+            moveBackward = false;
+            break;
+          case 'ArrowRight':
+          case 'KeyD':
+            moveRight = false;
+            break;
+        }
+      }
+      
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+        
+        if (controls.isLocked === true) {
+          // Calculate time delta for smooth movement
+          const time = performance.now();
+          const delta = (time - prevTime) / 1000;
+          
+          // Apply friction
+          velocity.x -= velocity.x * 10.0 * delta;
+          velocity.z -= velocity.z * 10.0 * delta;
+          
+          // Calculate movement direction
+          direction.z = Number(moveForward) - Number(moveBackward);
+          direction.x = Number(moveRight) - Number(moveLeft);
+          direction.normalize(); // Normalize for consistent movement in all directions
+          
+          // Apply movement velocity
+          const moveSpeed = 5.0;
+          if (moveForward || moveBackward) velocity.z -= direction.z * moveSpeed * delta;
+          if (moveLeft || moveRight) velocity.x -= direction.x * moveSpeed * delta;
+          
+          // Apply movement
+          controls.moveRight(-velocity.x * delta);
+          controls.moveForward(-velocity.z * delta);
+          
+          // Boundary checks - keep the user within the gallery
+          const margin = 1.0; // Distance from walls
+          
+          if (camera.position.x < -galleryConfig.roomWidth / 2 + margin) {
+            camera.position.x = -galleryConfig.roomWidth / 2 + margin;
+          }
+          
+          if (camera.position.x > galleryConfig.roomWidth / 2 - margin) {
+            camera.position.x = galleryConfig.roomWidth / 2 - margin;
+          }
+          
+          if (camera.position.z < -galleryConfig.roomDepth / 2 + margin) {
+            camera.position.z = -galleryConfig.roomDepth / 2 + margin;
+          }
+          
+          if (camera.position.z > galleryConfig.roomDepth / 2 - margin) {
+            camera.position.z = galleryConfig.roomDepth / 2 - margin;
+          }
+          
+          // Update prev time
+          prevTime = time;
+        }
+        
+        // Render the scene
+        renderer.render(scene, camera);
+      }
+      
+      // Start the 3D gallery
+      init();
+    }
+  </script>
+</body>
+</html> 
